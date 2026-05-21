@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy to Bear2WaveTraceFormats.props and import from TEST1.vcxproj (x64 configs).
+  Requires: tools\fetch_gtkwave_libs.ps1 and vcpkg zlib (+ optional bzip2, lzma).
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <VcpkgRoot Condition="'$(VcpkgRoot)'==''">E:\download\vcpkg-master\installed\x64-windows</VcpkgRoot>
+    <GtkwaveLibRoot>$(MSBuildProjectDirectory)\..\third_party\gtkwave</GtkwaveLibRoot>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>BEAR2WAVE_WITH_VZT;BEAR2WAVE_WITH_LXT2;HAVE_ZLIB;HAVE_BZ2;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(VcpkgRoot)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>bz2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

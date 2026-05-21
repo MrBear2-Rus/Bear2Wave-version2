@@ -7,14 +7,15 @@
 #include <string>
 #include <vector>
 #define VCD_SIGNAL_COUNT 100
-#define VCD_VALUE_CHANGE_COUNT 200000
+/** Initial capacity when appending value changes (grows exponentially). */
+#define VCD_VALUE_CHANGES_INITIAL_CAP 64
 #define VCD_SIGNAL_SIZE 64
 #define VCD_NAME_SIZE 32
 #define VCD_TIME_UNIT_SIZE 8
 #define VCD_VERSION_SIZE 64
 #define VCD_DATE_SIZE 64
 
-typedef uint32_t timestamp_t;
+typedef uint64_t timestamp_t;
 
 
 
@@ -31,9 +32,32 @@ typedef struct {
     char full_name[VCD_SIGNAL_SIZE]; // 新增：存储完整信号名（如TOP.a/TOP.full_adder.u1.sum）
     char signal_id[VCD_NAME_SIZE];
     size_t size;
-    value_change_t value_changes[VCD_VALUE_CHANGE_COUNT];
+    /** From FST hierarchy (fstVarType); -1 if unknown / VCD-only / GEOM fallback. */
+    int32_t fst_var_type;
+    value_change_t* value_changes;
     size_t changes_count;
+    size_t changes_capacity;
+    /** 1 if value_changes timestamps are sorted (enables binary probe). */
+    uint8_t changes_sorted;
+    /** 1 if lazy backend has loaded VC data for this signal. */
+    uint8_t trace_data_loaded;
+    /** Inclusive loaded time span (valid when trace_data_loaded). */
+    uint64_t trace_loaded_t0;
+    uint64_t trace_loaded_t1;
 } signal_t;
+
+/** Trace storage backend attached to vcd_t (see trace_loader / *\_loader). */
+enum vcd_trace_backend_t {
+    VCD_TRACE_BACKEND_NONE = 0,
+    VCD_TRACE_BACKEND_FST_LAZY = 1,
+    VCD_TRACE_BACKEND_VZT_LAZY = 2,
+    VCD_TRACE_BACKEND_LXT2_LAZY = 3,
+    VCD_TRACE_BACKEND_GHW_LAZY = 4
+};
+
+/** Full-file load window for trace_load_signals. */
+#define TRACE_LOAD_T0_FULL 0u
+#define TRACE_LOAD_T1_FULL UINT64_MAX
 
 typedef struct {
     char unit[VCD_TIME_UNIT_SIZE];
@@ -52,6 +76,11 @@ typedef struct {
     char version[VCD_VERSION_SIZE];
     timescale_t timescale;
     char current_module_path[VCD_NAME_SIZE];
+    /** Opaque session (e.g. FstTraceSession*); freed in vcd_free. */
+    void* trace_session;
+    uint8_t trace_backend;
+    /** File end time when hierarchy-only open (FST lazy); 0 = derive from changes. */
+    uint64_t trace_max_timestamp;
 } vcd_t;
 
 struct SignalGroup {
@@ -80,12 +109,26 @@ struct SignalGroup {
         return nullptr;
     }
 };
-// �����޸ģ�������C����������extern "C"������C++����
 #ifdef __cplusplus
 extern "C" {
 #endif
 
     vcd_t* vcd_read_from_path(char* path);
+
+    /** Allocate empty vcd_t (same as internal new_vcd); used by FST loader. */
+    vcd_t* vcd_alloc_empty(void);
+
+    /** Free dynamic value-change buffer for one signal (heap CSV signals, etc.). */
+    void signal_free_value_changes(signal_t* sig);
+
+    /** Append one change; grows buffer as needed. Returns 0 on success, -1 on OOM / invalid args. */
+    int vcd_signal_append_change(signal_t* sig, timestamp_t ts, const char* value);
+
+    /** Append only if ts is outside sig's loaded lazy span (incremental trace load). */
+    int vcd_signal_append_change_lazy(signal_t* sig, timestamp_t ts, const char* value);
+
+    /** Realloc value_changes to exact count after load (reduces memory overhead). */
+    void vcd_signal_shrink_to_fit(signal_t* sig);
 
     
     signal_t* vcd_get_signal_by_name(vcd_t* vcd, const char* signal_name);
@@ -106,10 +149,19 @@ extern "C" {
     // 释放信号树内存
     void FreeSignalTree(SignalGroup* root);
 
-
-   
-// 修改后：新增
     void vcd_free(vcd_t* vcd);
+
+    /** Sort one signal's value_changes by timestamp; no-op if already sorted. */
+    void vcd_sort_signal_value_changes(signal_t* sig);
+
+    /** Sort every signal's value_changes by timestamp. */
+    void vcd_sort_all_value_changes(vcd_t* vcd);
+
+    /** Ensure sorted before binary search / draw (sorts once per signal). */
+    void vcd_ensure_signal_sorted(signal_t* sig);
+
+    /** Clear value changes and lazy-load metadata for one signal. */
+    void vcd_signal_clear_trace_data(signal_t* sig);
 
 #ifdef __cplusplus
 }

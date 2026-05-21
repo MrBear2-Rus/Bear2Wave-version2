@@ -5,7 +5,9 @@
 #include <string.h>
 
 #include "vcd.h"
+#include <algorithm>
 #include <string>
+#include <unordered_map>
 
 // 扩展支持的赋值值字符（包含x/z/X/Z）
 #define isexpression(c) (strchr("-0123456789zZxXbU", (c)))
@@ -18,10 +20,91 @@ typedef enum {
     INSIDE_INNER_MODULES
 } state_t;
 
+extern "C" void signal_free_value_changes(signal_t* sig)
+{
+    if (!sig)
+        return;
+    free(sig->value_changes);
+    sig->value_changes = nullptr;
+    sig->changes_count = 0;
+    sig->changes_capacity = 0;
+}
+
+void vcd_signal_clear_trace_data(signal_t* sig)
+{
+    if (!sig)
+        return;
+    signal_free_value_changes(sig);
+    sig->trace_data_loaded = 0;
+    sig->trace_loaded_t0 = 0;
+    sig->trace_loaded_t1 = 0;
+    sig->changes_sorted = 0;
+}
+
+extern "C" int vcd_signal_append_change(signal_t* sig, timestamp_t ts, const char* value)
+{
+    if (!sig || !value)
+        return -1;
+    if (sig->changes_count >= sig->changes_capacity) {
+        size_t ncap = sig->changes_capacity ? (sig->changes_capacity * 2u) : (size_t)VCD_VALUE_CHANGES_INITIAL_CAP;
+        value_change_t* nv = (value_change_t*)realloc(sig->value_changes, ncap * sizeof(value_change_t));
+        if (!nv)
+            return -1;
+        sig->value_changes = nv;
+        sig->changes_capacity = ncap;
+    }
+    sig->changes_sorted = 0;
+    value_change_t* ch = &sig->value_changes[sig->changes_count++];
+    ch->timestamp = ts;
+    strncpy(ch->value, value, VCD_SIGNAL_SIZE - 1);
+    ch->value[VCD_SIGNAL_SIZE - 1] = '\0';
+    return 0;
+}
+
+extern "C" int vcd_signal_append_change_lazy(signal_t* sig, timestamp_t ts, const char* value)
+{
+    if (!sig || !value)
+        return -1;
+    if (sig->trace_data_loaded) {
+        const uint64_t uts = static_cast<uint64_t>(ts);
+        if (uts >= sig->trace_loaded_t0 && uts <= sig->trace_loaded_t1)
+            return 0;
+    }
+    return vcd_signal_append_change(sig, ts, value);
+}
+
+extern "C" void vcd_signal_shrink_to_fit(signal_t* sig)
+{
+    if (!sig)
+        return;
+    if (sig->changes_count == 0) {
+        signal_free_value_changes(sig);
+        return;
+    }
+    if (sig->changes_capacity > sig->changes_count) {
+        value_change_t* nv = (value_change_t*)realloc(
+            sig->value_changes, sig->changes_count * sizeof(value_change_t));
+        if (nv) {
+            sig->value_changes = nv;
+            sig->changes_capacity = sig->changes_count;
+        }
+    }
+}
+
 static vcd_t* new_vcd();
-static bool parse_instruction(FILE* file, vcd_t* vcd, state_t* state);
+static bool parse_instruction(FILE* file, vcd_t* vcd, state_t* state, std::unordered_map<std::string, signal_t*>* id_map);
 static bool parse_timestamp(FILE* file, timestamp_t* timestamp);
-static bool parse_assignment(FILE* file, vcd_t* vcd, timestamp_t timestamp);
+static bool parse_assignment(FILE* file, vcd_t* vcd, timestamp_t timestamp, std::unordered_map<std::string, signal_t*>* id_map);
+/** FST/部分路径下变化未必按时间追加；排序后缓存与 RawValueAtOrBefore 的假设一致。 */
+static void sort_signal_value_changes_chronological(signal_t* sig)
+{
+    if (!sig || !sig->value_changes || sig->changes_count < 2u)
+        return;
+    std::stable_sort(
+        sig->value_changes,
+        sig->value_changes + sig->changes_count,
+        [](const value_change_t& a, const value_change_t& b) { return a.timestamp < b.timestamp; });
+}
 static int get_signal_index(const char* string);
 // 新增：日志辅助函数（调试用，可按需删除）
 static void log_signal_info(vcd_t* vcd);
@@ -36,11 +119,13 @@ vcd_t* vcd_read_from_path(char* path) {
     vcd_t* vcd = new_vcd();
     timestamp_t current_timestamp = 0;
     state_t state = BEFORE_MODULE_DEFINITIONS;
+    std::unordered_map<std::string, signal_t*> id_to_sig;
+    id_to_sig.reserve(4096);
 
     int character = 0;
     while ((character = fgetc(file)) != EOF) {
         if (character == '$') {
-            bool successful = parse_instruction(file, vcd, &state);
+            bool successful = parse_instruction(file, vcd, &state, &id_to_sig);
             if (successful)
                 continue;
         }
@@ -51,7 +136,7 @@ vcd_t* vcd_read_from_path(char* path) {
         }
         else if (isexpression(character)) {
             ungetc(character, file);
-            bool successful = parse_assignment(file, vcd, current_timestamp);
+            bool successful = parse_assignment(file, vcd, current_timestamp, &id_to_sig);
             if (successful)
                 continue;
         }
@@ -63,6 +148,9 @@ vcd_t* vcd_read_from_path(char* path) {
             continue;
         }
     }
+
+    for (signal_node_t* node = vcd->signals_head; node; node = node->next)
+        vcd_sort_signal_value_changes(&node->signal);
 
     // 调试：打印解析到的信号信息
     log_signal_info(vcd);
@@ -83,25 +171,39 @@ signal_t* vcd_get_signal_by_name(vcd_t* vcd, const char* signal_name) {
 }
 
 char* vcd_signal_get_value_at_timestamp(signal_t* signal, timestamp_t timestamp) {
-    if (signal == NULL) return NULL;
-    char* previous_value = NULL;
-    for (size_t i = 0; i < signal->changes_count; ++i) { // 修复：int -> size_t
-        value_change_t* value_change = &signal->value_changes[i];
-        if (timestamp < value_change->timestamp)
-            break;
-        previous_value = value_change->value;
+    if (signal == NULL || !signal->value_changes || signal->changes_count == 0) return NULL;
+    /* 与 WaveformPanel::RawValueAtOrBefore 一致：不要求 changes 按时间升序 */
+    timestamp_t best_ts = 0;
+    char* best_val = NULL;
+    bool have = false;
+    for (size_t i = 0; i < signal->changes_count; ++i) {
+        value_change_t* vc = &signal->value_changes[i];
+        if (vc->timestamp > timestamp) continue;
+        if (!have || vc->timestamp > best_ts) {
+            best_ts = vc->timestamp;
+            best_val = vc->value;
+            have = true;
+        } else if (vc->timestamp == best_ts) {
+            best_val = vc->value;
+        }
     }
-    // 修复：如果没有找到任何值，返回空字符串而非NULL（避免野指针）
-    return previous_value ? previous_value : (char*)"";
+    if (have) return best_val;
+    return (char*)"";
 }
 
 // 新增：内存释放函数（解决内存泄漏）
+/** Implemented in trace_loader.cpp (releases FST session, etc.). */
+extern void vcd_trace_session_release(vcd_t* vcd);
+
 void vcd_free(vcd_t* vcd) {
     if (!vcd) return;
+
+    vcd_trace_session_release(vcd);
 
     signal_node_t* node = vcd->signals_head;
     while (node) {
         signal_node_t* next = node->next;
+        signal_free_value_changes(&node->signal);
         free(node);
         node = next;
     }
@@ -121,6 +223,30 @@ vcd_t* new_vcd() {
     }
     return vcd;
 }
+
+vcd_t* vcd_alloc_empty(void) { return new_vcd(); }
+
+void vcd_sort_signal_value_changes(signal_t* sig)
+{
+    if (!sig || sig->changes_sorted)
+        return;
+    sort_signal_value_changes_chronological(sig);
+    sig->changes_sorted = 1;
+}
+
+void vcd_ensure_signal_sorted(signal_t* sig)
+{
+    vcd_sort_signal_value_changes(sig);
+}
+
+void vcd_sort_all_value_changes(vcd_t* vcd)
+{
+    if (!vcd)
+        return;
+    for (signal_node_t* node = vcd->signals_head; node; node = node->next)
+        vcd_sort_signal_value_changes(&node->signal);
+}
+
 /*
 // 新增：模块路径拼接/回退核心函数
 static void update_module_path(vcd_t* vcd, const char* module_name, bool is_upscope) {
@@ -151,9 +277,9 @@ static void update_module_path(vcd_t* vcd, const char* module_name, bool is_upsc
     }
 }
 */
-bool parse_instruction(FILE* file, vcd_t* vcd, state_t* state) {
+bool parse_instruction(FILE* file, vcd_t* vcd, state_t* state, std::unordered_map<std::string, signal_t*>* id_map) {
     char instruction[BUFFER_LENGTH];
-    if (fscanf(file, "%s", instruction) != 1)
+    if (fscanf(file, "%511s", instruction) != 1)
         return false;
 
     // 忽略无关指令
@@ -169,7 +295,7 @@ bool parse_instruction(FILE* file, vcd_t* vcd, state_t* state) {
     if (strcmp(instruction, "scope") == 0) {
         char module_type[BUFFER_LENGTH];
         char module_name[BUFFER_LENGTH];
-        fscanf(file, " %s %s", module_type, module_name);
+        fscanf(file, " %511s %511s", module_type, module_name);
 
         // 进入子模块，拼接路径
         update_module_path(vcd, module_name, false);
@@ -195,6 +321,7 @@ bool parse_instruction(FILE* file, vcd_t* vcd, state_t* state) {
 
         signal_t* signal = &new_node->signal;
         memset(signal, 0, sizeof(signal_t));
+        signal->fst_var_type = -1;
 
         char type[BUFFER_LENGTH];
         char signal_id[VCD_NAME_SIZE];
@@ -202,7 +329,7 @@ bool parse_instruction(FILE* file, vcd_t* vcd, state_t* state) {
 
         // 【正确顺序 1】先读取信号的所有信息
         int ret = fscanf(file,
-            " %s %zu %[^ ] %[^ $]%*[^$]",
+            " %511s %zu %31[^ ] %31[^ $]%*[^$]",
             type,
             &signal->size,
             signal_id,
@@ -250,22 +377,24 @@ bool parse_instruction(FILE* file, vcd_t* vcd, state_t* state) {
         }
 
         vcd->signals_count++;
+        if (id_map)
+            (*id_map)[std::string(signal->signal_id)] = signal;
         return true;
     }
 
     // ====================== 解析文件头信息 ======================
     if (strcmp(instruction, "date") == 0) {
-        fscanf(file, "\n%[^$\n]", vcd->date);
+        fscanf(file, "\n%63[^$\n]", vcd->date);
         return true;
     }
 
     if (strcmp(instruction, "version") == 0) {
-        fscanf(file, "\n%[^$\n]", vcd->version);
+        fscanf(file, "\n%63[^$\n]", vcd->version);
         return true;
     }
 
     if (strcmp(instruction, "timescale") == 0) {
-        fscanf(file, "\n%zu%[^ \n$]", &vcd->timescale.scale, vcd->timescale.unit);
+        fscanf(file, "\n%zu%7[^ \n$]", &vcd->timescale.scale, vcd->timescale.unit);
         return true;
     }
 
@@ -273,11 +402,14 @@ bool parse_instruction(FILE* file, vcd_t* vcd, state_t* state) {
 }
 
 bool parse_timestamp(FILE* file, timestamp_t* timestamp) {
-    // 修复：跳过时间戳前的空白字符，提高兼容性
-    return fscanf(file, " %u", timestamp) == 1;
+    unsigned long long v = 0;
+    if (fscanf(file, " %llu", &v) != 1)
+        return false;
+    *timestamp = (timestamp_t)v;
+    return true;
 }
 
-bool parse_assignment(FILE* file, vcd_t* vcd, timestamp_t timestamp)
+bool parse_assignment(FILE* file, vcd_t* vcd, timestamp_t timestamp, std::unordered_map<std::string, signal_t*>* id_map)
 {
     char buffer[BUFFER_LENGTH];
 
@@ -290,80 +422,61 @@ bool parse_assignment(FILE* file, vcd_t* vcd, timestamp_t timestamp)
     bool is_vector = (strchr("01xXzZ", buffer[0]) == NULL);
 
     int parse_count = 0;
+    char scanfmt[48];
 
-    // 解析赋值格式
+    // 解析赋值格式（必须限制宽度，否则宽向量 b... 会写爆 value[] / signal_id[]）
     if (is_vector)
     {
-        // 向量：b101 !
-        parse_count = sscanf(buffer, "%[^ ] %[^\n ]", value, signal_id);
+        snprintf(scanfmt, sizeof scanfmt, "%%%d[^ ] %%%d[^\n ]",
+            (int)(VCD_SIGNAL_SIZE - 1), (int)(VCD_NAME_SIZE - 1));
+        parse_count = sscanf(buffer, scanfmt, value, signal_id);
     }
     else
     {
-        // 标量：1!
-        parse_count = sscanf(buffer, "%1s%[^\n ]", value, signal_id);
+        snprintf(scanfmt, sizeof scanfmt, "%%1s%%%d[^\n ]", (int)(VCD_NAME_SIZE - 1));
+        parse_count = sscanf(buffer, scanfmt, value, signal_id);
     }
 
     if (parse_count != 2)
         return false;
 
-    // 防止 signal_id 溢出
-    if (strlen(signal_id) >= VCD_NAME_SIZE)
-        signal_id[VCD_NAME_SIZE - 1] = '\0';
+    value[VCD_SIGNAL_SIZE - 1] = '\0';
+    signal_id[VCD_NAME_SIZE - 1] = '\0';
 
-    signal_node_t* node = vcd->signals_head;
-    bool found = false;
-
-    while (node) {
-        signal_t* signal = &node->signal;  // 链表节点信号
-
-        if (strcmp(signal->signal_id, signal_id) == 0) {
-            found = true;
-
-            if (signal->changes_count < VCD_VALUE_CHANGE_COUNT) {
-                value_change_t* change = &signal->value_changes[signal->changes_count];
-
-                change->timestamp = timestamp;
-                strncpy(change->value, value, VCD_SIGNAL_SIZE - 1);
-                change->value[VCD_SIGNAL_SIZE - 1] = '\0';
-
-                signal->changes_count++;
-
-                // 调试输出
-                printf("赋值 -> ID:%s 完整名称:%s 时间戳:%u 值:%s\n",
-                    signal_id, signal->full_name, timestamp, value);
-            }
-            // 超过容量就跳过当前信号，但继续遍历其它信号
-        }
-
-        node = node->next;  // **千万不要忘记移动到下一个节点**
-    }
-
-    // 没找到 signal_id 也不算错误
-    return true;
-
-    // 没找到 signal_id 也不算错误
-    if (!found)
+    if (!id_map)
         return true;
-
+    auto it = id_map->find(std::string(signal_id));
+    if (it == id_map->end())
+        return true;
+    signal_t* signal = it->second;
+    if (signal && vcd_signal_append_change(signal, timestamp, value) != 0) {
+        static int once = 0;
+        if (!once) {
+            fprintf(stderr, "[VCD] vcd_signal_append_change failed (out of memory?)\n");
+            once = 1;
+        }
+    }
     return true;
 }
 timestamp_t vcd_get_max_timestamp(vcd_t* vcd) {
     if (vcd == NULL) return 0;
+
+    if (vcd->trace_max_timestamp > 0)
+        return (timestamp_t)vcd->trace_max_timestamp;
 
     timestamp_t max_ts = 0;
 
     signal_node_t* node = vcd->signals_head;
     while (node) {
         signal_t* signal = &node->signal;
-
-        for (size_t j = 0; j < signal->changes_count; ++j) {
-            value_change_t* change = &signal->value_changes[j];
-            if (change->timestamp > max_ts) {
-                max_ts = change->timestamp;
+        if (signal->value_changes) {
+            for (size_t j = 0; j < signal->changes_count; ++j) {
+                value_change_t* change = &signal->value_changes[j];
+                if (change->timestamp > max_ts)
+                    max_ts = change->timestamp;
             }
         }
-
-        node = node->next;  // 遍历下一个节点
+        node = node->next;
     }
 
     return max_ts;
@@ -377,6 +490,9 @@ timestamp_t vcd_get_max_timestamp(vcd_t* vcd) {
 // 新增：调试日志 - 打印解析到的所有信号信息（含模块路径）
 static void log_signal_info(vcd_t* vcd) {
     if (vcd == NULL) return;
+    const char* dbg = getenv("BEAR2WAVE_VCD_DEBUG");
+    if (!dbg || dbg[0] == '\0' || dbg[0] == '0')
+        return;
 
     printf("===== VCD解析结果 =====\n");
 
@@ -438,6 +554,9 @@ int get_signal_index(const char* string) {
 static void update_module_path(vcd_t* vcd, const char* module_name, bool is_upscope) {
     if (!vcd) return;
 
+    /* current_module_path 在 vcd_t 中只有 VCD_NAME_SIZE 字节，勿用 VCD_SIGNAL_SIZE */
+    const size_t cap = VCD_NAME_SIZE;
+
     // 回退路径（upscope/enddefinitions）
     if (is_upscope) {
         char* last_dot = strrchr(vcd->current_module_path, '.');
@@ -445,33 +564,30 @@ static void update_module_path(vcd_t* vcd, const char* module_name, bool is_upsc
             *last_dot = '\0'; // 截断最后一个模块（如 TOP.full → TOP）
         }
         else {
-            memset(vcd->current_module_path, 0, VCD_SIGNAL_SIZE); // 清空根路径
+            memset(vcd->current_module_path, 0, cap);
         }
         return;
     }
 
     // 拼接路径（scope指令）
-    if (!module_name || *module_name == '\0' || strlen(module_name) >= VCD_NAME_SIZE - 1) {
+    if (!module_name || *module_name == '\0' || strlen(module_name) >= cap - 1) {
         return; // 过滤空/超长模块名
     }
 
-    // 安全拼接：计算当前路径长度 + 新模块名长度，避免溢出
     size_t curr_len = strlen(vcd->current_module_path);
     size_t new_name_len = strlen(module_name);
-    // 预留 "." + 结束符的空间
-    if (curr_len + new_name_len + 2 > VCD_SIGNAL_SIZE) {
+    if (curr_len + new_name_len + 2 > cap) {
         fprintf(stderr, "模块路径过长：%s + %s\n", vcd->current_module_path, module_name);
         return;
     }
 
     if (curr_len > 0) {
-        snprintf(vcd->current_module_path + curr_len, VCD_SIGNAL_SIZE - curr_len,
-            ".%s", module_name);
+        snprintf(vcd->current_module_path + curr_len, cap - curr_len, ".%s", module_name);
     }
     else {
-        strncpy(vcd->current_module_path, module_name, VCD_SIGNAL_SIZE - 1);
+        strncpy(vcd->current_module_path, module_name, cap - 1);
     }
-    vcd->current_module_path[VCD_SIGNAL_SIZE - 1] = '\0'; // 强制终止，防止溢出
+    vcd->current_module_path[cap - 1] = '\0';
 }
 
 // 新增：模块路径切割工具函数（供信号树构建用）
