@@ -1,0 +1,120 @@
+﻿GwTime lxt_main(char *fname)
+{
+    int i;
+    struct Node *n;
+    struct symbol *s, *prevsymroot = NULL, *prevsym = NULL;
+    off_t tagpnt;
+    int tag;
+    struct symbol *sym_block = NULL;
+    struct Node *node_block = NULL;
+    char **f_name = NULL;
+
+    GLOBALS->fd_lxt_c_1 = open(fname, O_RDONLY);
+    if (GLOBALS->fd_lxt_c_1 < 0) {
+        fprintf(stderr, "Could not open '%s', exiting.\n", fname);
+        vcd_exit(255);
+    }
+
+    GLOBALS->f_len_lxt_c_1 = lseek(GLOBALS->fd_lxt_c_1, (off_t)0, SEEK_END);
+#if defined __MINGW32__
+    win_fname = fname;
+#endif
+    GLOBALS->mm_lxt_c_1 =
+        mmap(NULL, GLOBALS->f_len_lxt_c_1, PROT_READ, MAP_SHARED, GLOBALS->fd_lxt_c_1, 0);
+    GLOBALS->mm_lxt_mmap_addr = GLOBALS->mm_lxt_c_1;
+    GLOBALS->mm_lxt_mmap_len = GLOBALS->f_len_lxt_c_1;
+
+    if (get_16((off_t)0) != LT_HDRID) /* scan-build, assign to i= from get_16 removed */
+    {
+        fprintf(stderr, "Not an LXT format AET, exiting.\n");
+        vcd_exit(255);
+    }
+
+    if ((GLOBALS->version_lxt_c_1 = get_16((off_t)2)) > LT_VERSION) {
+        fprintf(stderr,
+                "Version %d of LXT format AETs not supported, exiting.\n",
+                GLOBALS->version_lxt_c_1);
+        vcd_exit(255);
+    }
+
+    if (get_byte(GLOBALS->f_len_lxt_c_1 - 1) != LT_TRLID) {
+        fprintf(stderr, "LXT '%s' is truncated, exiting.\n", fname);
+        vcd_exit(255);
+    }
+
+    DEBUG(printf(LXTHDR "Loading LXT '%s'...\n", fname));
+    DEBUG(printf(LXTHDR "Len: %d\n", (unsigned int)GLOBALS->f_len_lxt_c_1));
+
+    /* SPLASH */ splash_create();
+
+    tagpnt = GLOBALS->f_len_lxt_c_1 - 2;
+    while ((tag = get_byte(tagpnt)) != LT_SECTION_END) {
+        off_t offset = get_32(tagpnt - 4);
+        tagpnt -= 5;
+
+        switch (tag) {
+            case LT_SECTION_CHG:
+                GLOBALS->change_field_offset_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_CHG at %08x\n", offset));
+                break;
+            case LT_SECTION_SYNC_TABLE:
+                GLOBALS->sync_table_offset_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_SYNC_TABLE at %08x\n", offset));
+                break;
+            case LT_SECTION_FACNAME:
+                GLOBALS->facname_offset_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_FACNAME at %08x\n", offset));
+                break;
+            case LT_SECTION_FACNAME_GEOMETRY:
+                GLOBALS->facgeometry_offset_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_FACNAME_GEOMETRY at %08x\n", offset));
+                break;
+            case LT_SECTION_TIMESCALE:
+                GLOBALS->timescale_offset_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_TIMESCALE at %08x\n", offset));
+                break;
+            case LT_SECTION_TIME_TABLE:
+                GLOBALS->time_table_offset_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_TIME_TABLE at %08x\n", offset));
+                break;
+            case LT_SECTION_TIME_TABLE64:
+                GLOBALS->time_table_offset64_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_TIME_TABLE64 at %08x\n", offset));
+                break;
+            case LT_SECTION_INITIAL_VALUE:
+                GLOBALS->initial_value_offset_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_INITIAL_VALUE at %08x\n", offset));
+                break;
+            case LT_SECTION_DOUBLE_TEST:
+                GLOBALS->double_test_offset_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_DOUBLE_TEST at %08x\n", offset));
+                break;
+
+            case LT_SECTION_ZFACNAME_PREDEC_SIZE:
+                GLOBALS->zfacname_predec_size_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_ZFACNAME_PREDEC_SIZE = %08x\n", offset));
+                break;
+            case LT_SECTION_ZFACNAME_SIZE:
+                GLOBALS->zfacname_size_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_ZFACNAME_SIZE = %08x\n", offset));
+                break;
+            case LT_SECTION_ZFACNAME_GEOMETRY_SIZE:
+                GLOBALS->zfacgeometry_size_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_ZFACNAME_GEOMETRY_SIZE = %08x\n", offset));
+                break;
+            case LT_SECTION_ZSYNC_SIZE:
+                GLOBALS->zsync_table_size_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_ZSYNC_SIZE = %08x\n", offset));
+                break;
+            case LT_SECTION_ZTIME_TABLE_SIZE:
+                GLOBALS->ztime_table_size_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_ZTIME_TABLE_SIZE = %08x\n", offset));
+                break;
+            case LT_SECTION_ZCHG_PREDEC_SIZE:
+                GLOBALS->zchg_predec_size_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_ZCHG_PREDEC_SIZE = %08x\n", offset));
+                break;
+            case LT_SECTION_ZCHG_SIZE:
+                GLOBALS->zchg_size_lxt_c_1 = offset;
+                DEBUG(printf(LXTHDR "LT_SECTION_ZCHG_SIZE = %08x\n", offset));
+                break;

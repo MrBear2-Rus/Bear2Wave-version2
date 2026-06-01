@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "bear2wave",
+  "version-string": "0.1.0",
+  "description": "Bear2Wave waveform viewer dependencies (trace loaders)",
+  "dependencies": [
+    "zlib",
+    "bzip2",
+    "liblzma"
+  ],
+  "builtin-baseline": "2024.12.16.0"
+}

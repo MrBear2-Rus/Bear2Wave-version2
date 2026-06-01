@@ -1,0 +1,45 @@
+# Optional large-trace loader tests (slow). Run manually or on schedule.
+name: Windows CI Nightly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * 0" # Sunday 04:00 UTC
+
+jobs:
+  large-trace-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 2024.12.16.0
+          vcpkgJsonGlob: vcpkg.json
+
+      - name: Prepare Bear2WaveTraceFormats.props
+        shell: pwsh
+        run: |
+          $props = "TEST1/Bear2WaveTraceFormats.props"
+          if (-not (Test-Path $props)) {
+            Copy-Item "TEST1/Bear2WaveTraceFormats.props.example" $props
+          }
+          $vcpkg = "$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows"
+          if (-not (Test-Path $vcpkg)) { $vcpkg = "$env:VCPKG_ROOT/installed/x64-windows" }
+          $xml = Get-Content $props -Raw
+          $xml = $xml -replace '<VcpkgRoot>[^<]*</VcpkgRoot>', "<VcpkgRoot>$vcpkg</VcpkgRoot>"
+          Set-Content -Path $props -Value $xml -NoNewline
+
+      - name: Build TraceTools and generate samples
+        shell: pwsh
+        env:
+          VcpkgRoot: ${{ env.VCPKG_ROOT }}/installed/x64-windows
+        run: |
+          powershell -ExecutionPolicy Bypass -File tools/run_trace_tests.ps1
+
+      - name: Bear2Wave CLI smoke (large traces)
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File tools/run_smoke.ps1 -SkipBuild -TraceToolsOnly -IncludeLarge

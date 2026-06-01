@@ -1,0 +1,200 @@
+﻿                        GLOBALS->zchg_size_lxt_c_1,
+                        GLOBALS->zchg_predec_size_lxt_c_1);
+                gzclose(zhandle);
+#if defined __MINGW32__
+                fclose(tmp);
+#endif
+            }
+
+            munmap(GLOBALS->mm_lxt_c_1, GLOBALS->f_len_lxt_c_1);
+#if !defined __MINGW32__
+            close(GLOBALS->fd_lxt_c_1);
+#endif
+
+            GLOBALS->fd_lxt_c_1 = -1;
+            GLOBALS->mm_lxt_c_1 =
+                buf - 4; /* because header and version don't exist in packed change records */
+        }
+    }
+
+    if (!GLOBALS->sync_table_offset_lxt_c_1) {
+        off_t vlen = GLOBALS->zchg_predec_size_lxt_c_1 ? GLOBALS->zchg_predec_size_lxt_c_1 + 4 : 0;
+        unsigned int numfacs_bytes;
+        unsigned int num_records = 0;
+        unsigned int last_change_delta, numbytes;
+        int *positional_compar = GLOBALS->positional_information_lxt_c_1;
+        int *positional_kill_pnt =
+            GLOBALS->positional_information_lxt_c_1 + GLOBALS->total_cycles_lxt_c_2;
+        char positional_kill = 0;
+
+        unsigned int dict_16_offset_new = 0;
+        unsigned int dict_24_offset_new = 0;
+        unsigned int dict_32_offset_new = 0;
+
+        char *nam;
+        FILE *tmp;
+        int recfd;
+        int fd_dummy;
+
+        offs = GLOBALS->zchg_predec_size_lxt_c_1 ? 4 : 0;
+        fprintf(stderr, LXTHDR "Linear LXT encountered...\n");
+
+        if (!GLOBALS->zchg_predec_size_lxt_c_1) {
+            fprintf(stderr, LXTHDR "Uncompressed linear LXT not supported, exiting.\n");
+            exit(255);
+        }
+
+        if (GLOBALS->numfacs >= 256 * 65536) {
+            numfacs_bytes = 3;
+        } else if (GLOBALS->numfacs >= 65536) {
+            numfacs_bytes = 2;
+        } else if (GLOBALS->numfacs >= 256) {
+            numfacs_bytes = 1;
+        } else {
+            numfacs_bytes = 0;
+        }
+
+        nam = tmpnam_2(NULL, &fd_dummy);
+        tmp = fopen(nam, "wb");
+        GLOBALS->fpos_lxt_c_1 = 4; /* fake 4 bytes padding */
+        recfd = open(nam, O_RDONLY);
+
+        unlink(nam);
+        if (fd_dummy >= 0)
+            close(fd_dummy);
+
+        while (offs < vlen) {
+            int facidx = 0;
+            unsigned char cmd;
+            off_t offscache2, offscache3;
+            unsigned int height;
+            unsigned char cmdkill;
+
+            num_records++;
+
+            /* remake time vs position table on the fly */
+            if (!positional_kill) {
+                if (offs == *positional_compar) {
+                    *positional_compar = GLOBALS->fpos_lxt_c_1;
+                    positional_compar++;
+                    if (positional_compar == positional_kill_pnt)
+                        positional_kill = 1;
+                }
+            }
+
+            switch (numfacs_bytes & 3) {
+                case 0:
+                    facidx = get_byte(offs);
+                    break;
+                case 1:
+                    facidx = get_16(offs);
+                    break;
+                case 2:
+                    facidx = get_24(offs);
+                    break;
+                case 3:
+                    facidx = get_32(offs);
+                    break;
+
+                default:
+                    // unreachable
+                    break;
+            }
+
+            if (facidx > GLOBALS->numfacs) {
+                fprintf(stderr,
+                        LXTHDR "Facidx %d out of range (vs %d) at offset %08x, exiting.\n",
+                        facidx,
+                        GLOBALS->numfacs,
+                        (unsigned int)offs);
+                exit(255);
+            }
+
+            offs += (numfacs_bytes + 1);
+
+            cmdkill = GLOBALS->mvlfacs_lxt_c_2[facidx].flags & (LT_SYM_F_DOUBLE | LT_SYM_F_STRING);
+            if (!cmdkill) {
+                cmd = get_byte(offs);
+
+                if (cmd > 0xf) {
+                    fprintf(stderr,
+                            LXTHDR "Command byte %02x invalid at offset %08x, exiting.\n",
+                            cmd,
+                            (unsigned int)offs);
+                    exit(0);
+                }
+
+                offs++;
+            } else {
+                cmd = 0;
+            }
+
+            offscache2 = offs;
+
+            height = GLOBALS->mvlfacs_lxt_c_2[facidx].node_alias;
+            if (height) {
+                if (height >= 256 * 65536) {
+                    offs += 4;
+                } else if (height >= 65536) {
+                    offs += 3;
+                } else if (height >= 256) {
+                    offs += 2;
+                } else {
+                    offs += 1;
+                }
+            }
+
+            offscache3 = offs;
+            if (!dict_16_offset_new) {
+                if (offs == GLOBALS->dict_16_offset_lxt_c_1) {
+                    dict_16_offset_new = GLOBALS->fpos_lxt_c_1;
+                }
+            } else if (!dict_24_offset_new) {
+                if (offs == GLOBALS->dict_24_offset_lxt_c_1) {
+                    dict_24_offset_new = GLOBALS->fpos_lxt_c_1;
+                }
+            } else if (!dict_32_offset_new) {
+                if (offs == GLOBALS->dict_32_offset_lxt_c_1) {
+                    dict_32_offset_new = GLOBALS->fpos_lxt_c_1;
+                }
+            }
+
+            /* printf("%08x : %04x %02x (%d) %s[%d:%d]\n", offscache, facidx, cmd,
+             * mvlfacs[facidx].len, mvlfacs[facidx].f_name, mvlfacs[facidx].msb,
+             * mvlfacs[facidx].lsb); */
+
+            if (!cmdkill)
+                switch (cmd) {
+                    unsigned int modlen;
+                    case 0x0:
+                        modlen = (!(GLOBALS->mvlfacs_lxt_c_2[facidx].flags & LT_SYM_F_INTEGER))
+                                     ? GLOBALS->mvlfacs_lxt_c_2[facidx].len
+                                     : 32;
+                        if ((GLOBALS->dict_string_mem_array_lxt_c_1) &&
+                            (modlen > GLOBALS->dict_width_lxt_c_1)) {
+                            if ((!GLOBALS->dict_16_offset_lxt_c_1) ||
+                                (offscache3 < GLOBALS->dict_16_offset_lxt_c_1)) {
+                                offs += 1;
+                            } else if ((!GLOBALS->dict_24_offset_lxt_c_1) ||
+                                       (offscache3 < GLOBALS->dict_24_offset_lxt_c_1)) {
+                                offs += 2;
+                            } else if ((!GLOBALS->dict_32_offset_lxt_c_1) ||
+                                       (offscache3 < GLOBALS->dict_32_offset_lxt_c_1)) {
+                                offs += 3;
+                            } else {
+                                offs += 4;
+                            }
+                        } else {
+                            offs += (modlen + 7) /
+                                    8; /* was offs += (GLOBALS->mvlfacs_lxt_c_2[facidx].len + 7)/8
+                                          which is wrong for integers! */
+                        }
+
+                        break;
+
+                    case 0x1:
+                        offs += (GLOBALS->mvlfacs_lxt_c_2[facidx].len + 3) / 4;
+                        break;
+
+                    case 0x2:
+                        offs += (GLOBALS->mvlfacs_lxt_c_2[facidx].len + 1) / 2;

@@ -1,0 +1,23 @@
+[*]
+[*] GTKWave save file (written by Bear2Wave)
+[*]
+[dumpfile]
+large_test.vcd
+[dumpfile_mtime] 1779927537
+[savefile] large_test.gtkw
+[size]
+1400 800
+[pos]
+153 109
+[sst_width] 280
+[signals_width] 300
+[state]
+0 1000
++mod_0.bit_0_1
++mod_0.bit_0_11
++mod_0.bit_0_13
++mod_0.bit_0_14
++mod_0.bit_0_17
++mod_0.bit_0_19
++mod_0.bit_0_2
++mod_0.bit_0_22

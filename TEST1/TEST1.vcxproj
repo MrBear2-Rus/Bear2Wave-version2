@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{119d7c59-ba2e-4078-9125-9b8a5043701c}</ProjectGuid>
+    <RootNamespace>Bear2Wave</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+    <Import Project="Bear2WaveWx.props" Condition="Exists('Bear2WaveWx.props')" />
+    <Import Project="Bear2WaveTraceFormats.props" Condition="Exists('Bear2WaveTraceFormats.props')" />
+    <Import Project="Bear2Wave.Build.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+    <Import Project="Bear2WaveWx.props" Condition="Exists('Bear2WaveWx.props')" />
+    <Import Project="Bear2WaveTraceFormats.props" Condition="Exists('Bear2WaveTraceFormats.props')" />
+    <Import Project="Bear2Wave.Build.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(ProjectDir)..\out\x64\Debug\</OutDir>
+    <IntDir>$(ProjectDir)..\out\obj\x64\Debug\</IntDir>
+    <TargetName>Bear2Wave</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)..\out\x64\Release\</OutDir>
+    <IntDir>$(ProjectDir)..\out\obj\x64\Release\</IntDir>
+    <TargetName>Bear2Wave</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;wxUSE_GRAPHICS_CONTEXT=1;wxUSE_GLCANVAS=1;wxUSE_DOUBLE_BUFFER=1;BEAR2WAVE_RENDER_OPENGL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <DisableSpecificWarnings>26495;6011;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalOptions>/utf-8 /FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WINDOWS;_CRT_SECURE_NO_WARNINGS;wxUSE_GRAPHICS_CONTEXT=1;wxUSE_GLCANVAS=1;wxUSE_DOUBLE_BUFFER=1;BEAR2WAVE_RENDER_OPENGL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <DisableSpecificWarnings>26495;6011;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalOptions>/utf-8 /FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>opengl32.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="core\TraceDocument.cpp" />
+    <!-- ClCompile Include="core\WaveformController.cpp" /-->
+    <!-- ClCompile Include="core\WaveformSessionController.cpp" /-->
+    <ClCompile Include="core\WaveformSession.cpp" />
+    <ClCompile Include="core\MarkdownToHtml.cpp" />
+    <ClCompile Include="ui\WaveformCompareHub.cpp" />
+    <ClCompile Include="ui\MainFrameMarkers.cpp" />
+    <ClCompile Include="ui\PatternSearchDialog.cpp" />
+    <ClCompile Include="ui\SimLogViewer.cpp" />
+    <ClCompile Include="panels\gl_load.cpp" />
+    <ClCompile Include="panels\WaveformGLRenderer.cpp" />
+    <ClCompile Include="panels\WaveformTextCanvas.cpp" />
+    <ClCompile Include="panels\DirectWriteTextCanvas.cpp" />
+    <ClCompile Include="panels\WaveformPainter.cpp" />
+    <ClCompile Include="panels\WaveformRenderer.cpp" />
+    <ClCompile Include="panels\WaveformPanel_pattern.cpp" />
+    <ClCompile Include="panels\WaveformPanel_events.cpp" />
+    <ClCompile Include="panels\WaveformPanel_trace_load.cpp" />
+    <ClCompile Include="script\TclScriptEngine.cpp" />
+    <ClCompile Include="ui\MainFrameMenus.cpp" />
+    <ClCompile Include="ui\MainFrameDiagnostics.cpp" />
+    <ClCompile Include="ui\ModuleTreeLazyCtrl.cpp" />
+    <ClCompile Include="ui\SignalModuleTree.cpp" />
+    <ClCompile Include="panels\WaveformPanel_measure.cpp" />
+    <ClCompile Include="AIAnalysisPanel.cpp" />
+    <ClCompile Include="bear2wave_config.cpp" />
+    <ClCompile Include="core\LlmClient.cpp" />
+    <ClCompile Include="core\ai_analysis_service.cpp" />
+    <ClCompile Include="waveform_local_stats.cpp" />
+    <ClCompile Include="waveform_analysis.cpp" />
+    <ClCompile Include="csv.cpp" />
+    <ClCompile Include="csv_loader.cpp" />
+    <ClCompile Include="core\trace_display.cpp" />
+    <ClCompile Include="core\ghw_state.cpp" />
+    <ClCompile Include="core\trace_blackout.cpp" />
+    <ClCompile Include="core\trace_external_convert.cpp" />
+    <ClCompile Include="core\trace_process_runner.cpp" />
+    <ClCompile Include="core\trace_filter_config.cpp" />
+    <ClCompile Include="core\sst_filter.cpp" />
+    <ClCompile Include="core\pattern_search.cpp" />
+    <ClCompile Include="core\sim_log.cpp" />
+    <ClCompile Include="core\waveform_hardcopy.cpp" />
+    <ClCompile Include="core\trace_translate_process.cpp" />
+    <ClCompile Include="core\trace_vcd_export_minimal.cpp" />
+    <ClCompile Include="core\trace_transaction_process.cpp" />
+    <ClCompile Include="core\trace_translate_debug.cpp" />
+    <ClCompile Include="core\trace_format_convert.cpp" />
+    <ClCompile Include="core\vcd_fst_writer.cpp" />
+    <ClCompile Include="core\ui_theme.cpp" />
+    <ClCompile Include="core\trace_niche_formats.cpp" />
+    <ClCompile Include="fst_loader.cpp" />
+    <ClCompile Include="trace_loader.cpp" />
+    <ClCompile Include="core\module_tree_lazy.cpp" />
+    <ClCompile Include="core\trace_memory_budget.cpp" />
+    <ClCompile Include="core\trace_compact_vc.cpp" />
+    <ClCompile Include="core\trace_sidecar_idx.cpp" />
+    <ClCompile Include="core\vcd_sidecar_idx.cpp" />
+    <ClCompile Include="core\vcd_recode_cache.cpp" />
+    <ClCompile Include="core\bear2wave_log.cpp" />
+    <ClCompile Include="core\trace_gui_debug.cpp" />
+    <ClCompile Include="core\bear2wave_minidump.cpp" />
+    <ClCompile Include="vzt_loader.cpp" />
+    <ClCompile Include="lxt_format.cpp" />
+    <ClCompile Include="lxt_loader.cpp" />
+    <ClCompile Include="lxt1_loader.cpp" />
+    <ClCompile Include="lxt2_loader.cpp" />
+    <ClCompile Include="ghw_loader.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="ProjectStartWindow.cpp" />
+    <ClCompile Include="vcd.cpp" />
+    <ClCompile Include="vcd_lazy.cpp" />
+    <ClCompile Include="..\third_party\libfst\src\fastlz.c">
+      <AdditionalIncludeDirectories>$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>__MINGW32__;_CRT_SECURE_NO_WARNINGS;FST_DO_MISALIGNED_OPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4244;4267;4146;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\libfst\src\fstapi.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>__MINGW32__;_CRT_SECURE_NO_WARNINGS;FST_DO_MISALIGNED_OPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4244;4267;4146;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\libfst\src\lz4.c">
+      <AdditionalIncludeDirectories>$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>__MINGW32__;_CRT_SECURE_NO_WARNINGS;FST_DO_MISALIGNED_OPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4244;4267;4146;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\libvzt\lzma\LzmaLib.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>$(GtkwaveInc);$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4146;4244;4267;4996;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\libvzt\vzt_read.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>$(GtkwaveInc);$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAVE_ZLIB;HAVE_BZ2;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4146;4244;4267;4996;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\libvzt\vzt_write.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>$(GtkwaveInc);$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAVE_ZLIB;HAVE_BZ2;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4146;4244;4267;4996;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\liblxt\lxt_write.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>$(GtkwaveInc);$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAVE_ZLIB;HAVE_BZ2;BEAR2WAVE_LXT2_SAFE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4146;4244;4267;4996;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\liblxt\lxt2_read.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>$(GtkwaveInc);$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAVE_ZLIB;HAVE_BZ2;BEAR2WAVE_LXT2_SAFE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4146;4244;4267;4996;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\liblxt\lxt2_write.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>$(GtkwaveInc);$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAVE_ZLIB;HAVE_BZ2;BEAR2WAVE_LXT2_SAFE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4146;4244;4267;4996;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\libghw\libghw.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>$(GtkwaveInc);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BEAR2WAVE_WITH_GHW;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4146;4244;4267;4996;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="core\TraceDocument.h" />
+    <!-- ClInclude Include="core\WaveformController.h" /-->
+    <!-- ClInclude Include="core\WaveformSessionController.h" /-->
+    <ClInclude Include="core\WaveformSession.h" />
+    <ClInclude Include="core\vcd_sidecar_idx.h" />
+    <ClInclude Include="core\vcd_recode_cache.h" />
+    <ClInclude Include="core\bear2wave_log.h" />
+    <ClInclude Include="core\trace_gui_debug.h" />
+    <ClInclude Include="core\bear2wave_minidump.h" />
+    <ClInclude Include="core\MarkdownToHtml.h" />
+    <ClInclude Include="ui\WaveformCompareHub.h" />
+    <ClInclude Include="script\TclScriptEngine.h" />
+    <ClInclude Include="ui\MenuIds.hpp" />
+    <ClInclude Include="ui\SignalModuleTree.h" />
+    <ClInclude Include="AIAnalysisPanel.h" />
+    <ClInclude Include="bear2wave_config.h" />
+    <ClInclude Include="core\LlmClient.h" />
+    <ClInclude Include="core\ai_analysis_service.h" />
+    <ClInclude Include="llm_client.h" />
+    <ClInclude Include="waveform_local_stats.h" />
+    <ClInclude Include="csv.h" />
+    <ClInclude Include="panels\gl_load.h" />
+    <ClInclude Include="panels\WaveformGLRenderer.h" />
+    <ClInclude Include="panels\WaveformPanel.hpp" />
+    <ClInclude Include="panels\WaveformPainter.h" />
+    <ClInclude Include="panels\WaveformRenderer.h" />
+    <ClInclude Include="ui\MainFrame.hpp" />
+    <ClInclude Include="ui\MainFrameMarkers.hpp" />
+    <ClInclude Include="ui\SimLogViewer.h" />
+    <ClInclude Include="ui\MainFrameMenus.hpp" />
+    <ClInclude Include="waveform_constants.h" />
+    <ClInclude Include="fst_loader.h" />
+    <ClInclude Include="trace_loader.h" />
+    <ClInclude Include="vzt_loader.h" />
+    <ClInclude Include="lxt_format.h" />
+    <ClInclude Include="lxt_loader.h" />
+    <ClInclude Include="lxt1_loader.h" />
+    <ClInclude Include="lxt2_loader.h" />
+    <ClInclude Include="ghw_loader.h" />
+    <ClInclude Include="core\trace_var_types.h" />
+    <ClInclude Include="core\trace_backend.h" />
+    <ClInclude Include="core\trace_memory_budget.h" />
+    <ClInclude Include="core\trace_vc.h" />
+    <ClInclude Include="ui\ModuleSignalListView.hpp" />
+    <ClInclude Include="waveform_analysis.h" />
+    <ClInclude Include="Main.h" />
+    <ClInclude Include="ProjectStartWindow.h" />
+    <ClInclude Include="vcd.h" />
+    <ClInclude Include="vcd_lazy.h" />
+  </ItemGroup>
+  <Target Name="Bear2WaveCheckDeps" BeforeTargets="ClCompile" Condition="'$(Platform)'=='x64'">
+    <Error Condition="'$(WxWidgetsRoot)'==''" Text="Bear2Wave: copy Bear2WaveWx.props.example to Bear2WaveWx.props and set WxWidgetsRoot (or set WXWIN)." />
+    <!-- VcpkgRoot check disabled: path configured in Bear2WaveTraceFormats.props -->
+  </Target>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

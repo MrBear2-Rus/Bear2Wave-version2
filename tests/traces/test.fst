@@ -1,0 +1,59 @@
+# FST File Format (Text Representation)
+# This is a text representation of an FST file for testing
+# Actual FST files are binary
+
+# File Header
+MAGIC: FST2\0\0\0\0
+VERSION: 1
+DATA_OFFSET: 1024
+UUID: 00000000-0000-0000-0000-000000000000
+
+# Time Scale
+TIME_UNIT: ns
+TIME_SCALE: 1
+
+# Signals
+SIGNAL_COUNT: 3
+
+# Signal 0
+SIGNAL_HASH: 12345
+SIGNAL_LENGTH: 1
+SIGNAL_TYPE: 0
+SIGNAL_PARENT: 0
+SIGNAL_NAME: clk
+
+# Signal 1
+SIGNAL_HASH: 67890
+SIGNAL_LENGTH: 1
+SIGNAL_TYPE: 0
+SIGNAL_PARENT: 0
+SIGNAL_NAME: reset
+
+# Signal 2
+SIGNAL_HASH: 54321
+SIGNAL_LENGTH: 4
+SIGNAL_TYPE: 1
+SIGNAL_PARENT: 0
+SIGNAL_NAME: data
+
+# Value Changes
+# Format: SIGNAL_ID TIMESTAMP VALUE
+0 0 0
+0 10 1
+0 20 0
+0 30 1
+0 40 0
+0 50 1
+0 60 0
+0 70 1
+0 80 0
+0 90 1
+1 0 1
+1 25 0
+2 0 0000
+2 35 0001
+2 55 0010
+2 75 0011
+2 95 0100
+
+# End of File

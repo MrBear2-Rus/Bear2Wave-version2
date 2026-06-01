@@ -1,0 +1,20 @@
+$date
+E3 test
+$version
+Bear2Wave E3 blackout sample
+$timescale 1ns $
+$scope module TOP $
+$var wire 1 ! clk $end
+$upscope $end
+$enddefinitions $end
+#0
+0!
+#100
+1!
+$dumpoff
+#200
+0!
+#300
+$dumpon
+#400
+1!

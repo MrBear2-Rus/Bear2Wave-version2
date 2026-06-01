@@ -1,0 +1,64 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  trace-tools:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 2024.12.16.0
+          vcpkgJsonGlob: vcpkg.json
+
+      - name: Prepare Bear2WaveTraceFormats.props
+        shell: pwsh
+        run: |
+          $props = "TEST1/Bear2WaveTraceFormats.props"
+          if (-not (Test-Path $props)) {
+            Copy-Item "TEST1/Bear2WaveTraceFormats.props.example" $props
+          }
+          $vcpkg = "$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows"
+          if (-not (Test-Path $vcpkg)) { $vcpkg = "$env:VCPKG_ROOT/installed/x64-windows" }
+          $xml = Get-Content $props -Raw
+          $xml = $xml -replace '<VcpkgRoot>[^<]*</VcpkgRoot>', "<VcpkgRoot>$vcpkg</VcpkgRoot>"
+          Set-Content -Path $props -Value $xml -NoNewline
+
+      - name: Build TraceTools (x64 Debug)
+        shell: pwsh
+        env:
+          VcpkgRoot: ${{ env.VCPKG_ROOT }}/installed/x64-windows
+        run: |
+          $msb = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest -requires Microsoft.Component.MSBuild `
+            -find "MSBuild\**\Bin\MSBuild.exe" | Select-Object -First 1
+          if (-not $msb) { throw "MSBuild not found" }
+          & $msb tools/TraceTools.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VcpkgRoot=$env:VcpkgRoot /v:minimal
+
+      - name: LlmClient JSON smoke (E1-5)
+        shell: pwsh
+        run: |
+          $msb = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest -requires Microsoft.Component.MSBuild `
+            -find "MSBuild\**\Bin\MSBuild.exe" | Select-Object -First 1
+          & $msb tools/LlmJsonSmoke.vcxproj /p:Configuration=Debug /p:Platform=x64 /v:minimal
+          & tools/x64/Debug/LlmJsonSmoke.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Generate samples and run trace loader tests
+        shell: pwsh
+        run: |
+          $env:VcpkgRoot = "$env:VCPKG_ROOT/installed/x64-windows"
+          powershell -ExecutionPolicy Bypass -File tools/run_trace_tests.ps1
+
+      - name: Bear2Wave CLI smoke (TraceTools)
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File tools/run_smoke.ps1 -SkipBuild -TraceToolsOnly
