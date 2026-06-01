@@ -1,0 +1,2 @@
+tests/traces/large_test.fst filter=lfs diff=lfs merge=lfs -text
+tests/traces/large_test.vcd filter=lfs diff=lfs merge=lfs -text

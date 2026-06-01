@@ -1,0 +1,2 @@
+Bear2Wave in-app help uses HTML in docs/help/ (wxHtmlWindow, inline styles only).
+Edit these .html files for Help menu content; docs/*.md remain for GitHub/offline reading.

@@ -1,0 +1,30 @@
+<html><body bgcolor="#eef2f7" text="#1e293b" link="#2563eb" vlink="#2563eb">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td bgcolor="#1e3a5f">
+<font color="#ffffff" face="Segoe UI, Microsoft YaHei UI, sans-serif" size="5"><b>性能与调优</b></font>
+</td></tr>
+<tr><td>
+<font face="Segoe UI, Microsoft YaHei UI, sans-serif" size="3">
+<h2><font color="#1565c0"><b>使用原则</b></font></h2>
+<ol>
+<li>仿真输出 <b>FST</b>，避免巨大 VCD</li>
+<li>只添加调试需要的信号（10～50 路通常足够）</li>
+<li>平移/缩放时 lazy 格式按需读块，状态栏有进度/ETA</li>
+<li>按 <font face="Consolas" bgcolor="#e2e8f0">Esc</font> 可取消进行中的加载</li>
+</ol>
+<br/>
+<h2><font color="#1565c0"><b>常用环境变量</b></font></h2>
+<table width="100%" cellpadding="6" cellspacing="0" border="1" bordercolor="#cbd5e1">
+<tr bgcolor="#e8eef5"><th><b>变量</b></th><th><b>默认</b></th><th><b>作用</b></th></tr>
+<tr><td><font face="Consolas" size="2">BEAR2WAVE_LOAD_MARGIN</font></td><td>0.2</td><td>视口外预加载比例</td></tr>
+<tr bgcolor="#f8fafc"><td><font face="Consolas" size="2">BEAR2WAVE_VCD_LAZY</font></td><td>auto</td><td>VCD 懒加载</td></tr>
+<tr><td><font face="Consolas" size="2">BEAR2WAVE_COMPACT_VC</font></td><td>1</td><td>1-bit 紧凑存储</td></tr>
+<tr bgcolor="#f8fafc"><td><font face="Consolas" size="2">BEAR2WAVE_MAX_LOADED_CHANGES</font></td><td>0</td><td>跳变内存上限+LRU</td></tr>
+<tr><td><font face="Consolas" size="2">BEAR2WAVE_MAX_SEGMENTS</font></td><td>5000</td><td>绘制段数 LOD</td></tr>
+</table>
+<p>完整列表见 Help → <b>环境变量</b>。</p>
+<p>基准：<font face="Consolas">TraceTools.exe bench waves.fst 20</font></p>
+</font>
+</td></tr>
+</table>
+</body></html>

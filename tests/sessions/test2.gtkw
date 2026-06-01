@@ -1,0 +1,15 @@
+[*]
+[*] GTKWave save file (written by Bear2Wave)
+[*]
+[dumpfile]
+../traces/test2.vcd
+[dumpfile_mtime] 1777468077
+[savefile] test2.gtkw
+[size] 1400 800
+[pos] -1 -1
+[state]
+0 200
++TOP.TOP.TOP.uart.rx_data[7:0]
++TOP.TOP.TOP.uart.rx_en
++TOP.TOP.TOP.uart.tx_en
++TOP.TOP.alu.alu_result[7:0]

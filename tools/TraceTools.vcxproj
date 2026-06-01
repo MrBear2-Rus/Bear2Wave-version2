@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <ProjectGuid>{a8f3c2e1-9b4d-4f6a-8c1e-2d3e4f5a6b7c}</ProjectGuid>
+    <RootNamespace>TraceTools</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="TraceTools.props" Condition="Exists('TraceTools.props')" />
+    <Import Project="..\TEST1\Bear2WaveTraceFormats.props" Condition="Exists('..\TEST1\Bear2WaveTraceFormats.props') and !Exists('TraceTools.props')" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="TraceTools.props" Condition="Exists('TraceTools.props')" />
+    <Import Project="..\TEST1\Bear2WaveTraceFormats.props" Condition="Exists('..\TEST1\Bear2WaveTraceFormats.props') and !Exists('TraceTools.props')" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+    <VcpkgRoot Condition="'$(VcpkgRoot)'=='' and '$(VCPKG_ROOT)'!=''">$(VCPKG_ROOT)\installed\x64-windows</VcpkgRoot>
+    <VcpkgRoot Condition="'$(VcpkgRoot)'==''">E:\download\vcpkg-master\installed\x64-windows</VcpkgRoot>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>..\TEST1;..\third_party\gtkwave;..\third_party\gtkwave\libghw;E:\download\vcpkg-master\installed\x64-windows\include;..\third_party\libfst\src;..\third_party\gtkwave\libvzt;..\third_party\gtkwave\libvzt\lzma;..\third_party\gtkwave\liblxt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4146;4244;4267;4996;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>E:\download\vcpkg-master\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zlib.lib;bz2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(VcpkgRoot)\bin\bz2.dll" copy /Y "$(VcpkgRoot)\bin\bz2.dll" "$(OutDir)"
+if exist "$(VcpkgRoot)\bin\zlib1.dll" copy /Y "$(VcpkgRoot)\bin\zlib1.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>..\TEST1;..\third_party\gtkwave;..\third_party\gtkwave\libghw;E:\download\vcpkg-master\installed\x64-windows\include;..\third_party\libfst\src;..\third_party\gtkwave\libvzt;..\third_party\gtkwave\libvzt\lzma;..\third_party\gtkwave\liblxt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4146;4244;4267;4996;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>E:\download\vcpkg-master\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zlib.lib;bz2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(VcpkgRoot)\bin\bz2.dll" copy /Y "$(VcpkgRoot)\bin\bz2.dll" "$(OutDir)"
+if exist "$(VcpkgRoot)\bin\zlib1.dll" copy /Y "$(VcpkgRoot)\bin\zlib1.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="trace_tools.cpp" />
+    <ClCompile Include="..\TEST1\trace_loader.cpp" />
+    <ClCompile Include="..\TEST1\csv.cpp" />
+    <ClCompile Include="..\TEST1\csv_loader.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_display.cpp" />
+    <ClCompile Include="..\TEST1\core\ghw_state.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_blackout.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_external_convert.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_process_runner.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_filter_config.cpp" />
+    <ClCompile Include="..\TEST1\core\sst_filter.cpp" />
+    <ClCompile Include="..\TEST1\core\pattern_search.cpp" />
+    <ClCompile Include="..\TEST1\core\sim_log.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_translate_process.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_vcd_export_minimal.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_transaction_process.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_translate_debug.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_format_convert.cpp" />
+    <ClCompile Include="..\TEST1\core\vcd_fst_writer.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_niche_formats.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_memory_budget.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_compact_vc.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_sidecar_idx.cpp" />
+    <ClCompile Include="..\TEST1\core\vcd_sidecar_idx.cpp" />
+    <ClCompile Include="..\TEST1\core\vcd_recode_cache.cpp" />
+    <ClCompile Include="..\TEST1\core\bear2wave_log.cpp" />
+    <ClCompile Include="..\TEST1\core\trace_gui_debug.cpp" />
+    <ClCompile Include="..\TEST1\vzt_loader.cpp" />
+    <ClCompile Include="..\TEST1\lxt_format.cpp" />
+    <ClCompile Include="..\TEST1\lxt_loader.cpp" />
+    <ClCompile Include="..\TEST1\lxt1_loader.cpp" />
+    <ClCompile Include="..\TEST1\lxt2_loader.cpp" />
+    <ClCompile Include="..\TEST1\ghw_loader.cpp">
+      <PreprocessorDefinitions>BEAR2WAVE_WITH_GHW;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\TEST1\fst_loader.cpp" />
+    <ClCompile Include="..\TEST1\vcd.cpp" />
+    <ClCompile Include="..\TEST1\vcd_lazy.cpp" />
+    <ClCompile Include="..\third_party\libfst\src\fastlz.c">
+      <PreprocessorDefinitions>__MINGW32__;_CRT_SECURE_NO_WARNINGS;FST_DO_MISALIGNED_OPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4146;4244;4267;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\libfst\src\fstapi.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+      <PreprocessorDefinitions>__MINGW32__;_CRT_SECURE_NO_WARNINGS;FST_DO_MISALIGNED_OPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\third_party\libfst\src\lz4.c">
+      <PreprocessorDefinitions>__MINGW32__;_CRT_SECURE_NO_WARNINGS;FST_DO_MISALIGNED_OPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+      <DisableSpecificWarnings>4146;4244;4267;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\libvzt\lzma\LzmaLib.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\libvzt\vzt_read.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\libvzt\vzt_write.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\liblxt\lxt_write.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\liblxt\lxt2_read.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\liblxt\lxt2_write.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\third_party\gtkwave\libghw\libghw.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>..\third_party\gtkwave;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BEAR2WAVE_WITH_GHW;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
+    </ClCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

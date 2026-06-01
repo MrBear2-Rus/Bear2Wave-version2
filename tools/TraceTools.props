@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TraceTools: VZT/LXT2/GHW (libghw linked for GHW tests). -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>BEAR2WAVE_WITH_VZT;BEAR2WAVE_WITH_LXT2;BEAR2WAVE_WITH_GHW;BEAR2WAVE_VZT_PTHREAD_WIN32;HAVE_ZLIB;HAVE_BZ2;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

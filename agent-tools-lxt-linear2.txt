@@ -1,0 +1,150 @@
+﻿                if (height >= 256 * 65536) {
+                    offs += 4;
+                } else if (height >= 65536) {
+                    offs += 3;
+                } else if (height >= 256) {
+                    offs += 2;
+                } else {
+                    offs += 1;
+                }
+            }
+
+            offscache3 = offs;
+            if (!dict_16_offset_new) {
+                if (offs == GLOBALS->dict_16_offset_lxt_c_1) {
+                    dict_16_offset_new = GLOBALS->fpos_lxt_c_1;
+                }
+            } else if (!dict_24_offset_new) {
+                if (offs == GLOBALS->dict_24_offset_lxt_c_1) {
+                    dict_24_offset_new = GLOBALS->fpos_lxt_c_1;
+                }
+            } else if (!dict_32_offset_new) {
+                if (offs == GLOBALS->dict_32_offset_lxt_c_1) {
+                    dict_32_offset_new = GLOBALS->fpos_lxt_c_1;
+                }
+            }
+
+            /* printf("%08x : %04x %02x (%d) %s[%d:%d]\n", offscache, facidx, cmd,
+             * mvlfacs[facidx].len, mvlfacs[facidx].f_name, mvlfacs[facidx].msb,
+             * mvlfacs[facidx].lsb); */
+
+            if (!cmdkill)
+                switch (cmd) {
+                    unsigned int modlen;
+                    case 0x0:
+                        modlen = (!(GLOBALS->mvlfacs_lxt_c_2[facidx].flags & LT_SYM_F_INTEGER))
+                                     ? GLOBALS->mvlfacs_lxt_c_2[facidx].len
+                                     : 32;
+                        if ((GLOBALS->dict_string_mem_array_lxt_c_1) &&
+                            (modlen > GLOBALS->dict_width_lxt_c_1)) {
+                            if ((!GLOBALS->dict_16_offset_lxt_c_1) ||
+                                (offscache3 < GLOBALS->dict_16_offset_lxt_c_1)) {
+                                offs += 1;
+                            } else if ((!GLOBALS->dict_24_offset_lxt_c_1) ||
+                                       (offscache3 < GLOBALS->dict_24_offset_lxt_c_1)) {
+                                offs += 2;
+                            } else if ((!GLOBALS->dict_32_offset_lxt_c_1) ||
+                                       (offscache3 < GLOBALS->dict_32_offset_lxt_c_1)) {
+                                offs += 3;
+                            } else {
+                                offs += 4;
+                            }
+                        } else {
+                            offs += (modlen + 7) /
+                                    8; /* was offs += (GLOBALS->mvlfacs_lxt_c_2[facidx].len + 7)/8
+                                          which is wrong for integers! */
+                        }
+
+                        break;
+
+                    case 0x1:
+                        offs += (GLOBALS->mvlfacs_lxt_c_2[facidx].len + 3) / 4;
+                        break;
+
+                    case 0x2:
+                        offs += (GLOBALS->mvlfacs_lxt_c_2[facidx].len + 1) / 2;
+                        break;
+
+                    case 0x3:
+                    case 0x4:
+                    case 0x5:
+                    case 0x6:
+                    case 0x7:
+                    case 0x8:
+                    case 0x9:
+                    case 0xa:
+                    case 0xb:
+                        break; /* single byte, no extra "skip" */
+
+                    case 0xc:
+                    case 0xd:
+                    case 0xe:
+                    case 0xf:
+                        offs += ((cmd & 3) + 1); /* skip past numbytes_trans */
+                        break;
+
+                    default:
+                        // unreachable
+                        break;
+                }
+            else {
+                /* cmdkill = 1 for strings + reals skip bytes */
+                if (GLOBALS->mvlfacs_lxt_c_2[facidx].flags & LT_SYM_F_DOUBLE) {
+                    offs += 8;
+                } else /* strings */
+                {
+                    while (get_byte(offs))
+                        offs++;
+                    offs++;
+                }
+            }
+
+            last_change_delta = GLOBALS->fpos_lxt_c_1 - GLOBALS->lastchange[facidx] - 2;
+            GLOBALS->lastchange[facidx] = GLOBALS->fpos_lxt_c_1;
+
+            GLOBALS->maxchange_lxt_c_1 = GLOBALS->fpos_lxt_c_1;
+            GLOBALS->maxindex_lxt_c_1 = facidx;
+
+            if (last_change_delta >= 256 * 65536) {
+                numbytes = 3;
+            } else if (last_change_delta >= 65536) {
+                numbytes = 2;
+            } else if (last_change_delta >= 256) {
+                numbytes = 1;
+            } else {
+                numbytes = 0;
+            }
+
+            lt_emit_u8(tmp, (numbytes << 4) | cmd);
+            switch (numbytes & 3) {
+                case 0:
+                    lt_emit_u8(tmp, last_change_delta);
+                    break;
+                case 1:
+                    lt_emit_u16(tmp, last_change_delta);
+                    break;
+                case 2:
+                    lt_emit_u24(tmp, last_change_delta);
+                    break;
+                case 3:
+                    lt_emit_u32(tmp, last_change_delta);
+                    break;
+
+                default:
+                    // unreachable
+                    break;
+            }
+
+            if (offs - offscache2) {
+                GLOBALS->fpos_lxt_c_1 += fwrite((char *)GLOBALS->mm_lxt_c_1 + offscache2,
+                                                1,
+                                                offs - offscache2,
+                                                tmp); /* copy rest of relevant info */
+            }
+        }
+
+        GLOBALS->dict_16_offset_lxt_c_1 = dict_16_offset_new;
+        GLOBALS->dict_24_offset_lxt_c_1 = dict_24_offset_new;
+        GLOBALS->dict_32_offset_lxt_c_1 = dict_32_offset_new;
+
+        fflush(tmp);

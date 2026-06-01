@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared x64 include/lib paths. Import after Bear2WaveWx.props + Bear2WaveTraceFormats.props -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <VcpkgRoot Condition="'$(VcpkgRoot)'=='' and '$(VCPKG_ROOT)'!=''">$(VCPKG_ROOT)\installed\x64-windows</VcpkgRoot>
+    <GtkwaveLibRoot Condition="'$(GtkwaveLibRoot)'==''">$(MSBuildProjectDirectory)\..\third_party\gtkwave</GtkwaveLibRoot>
+    <Bear2WaveVersion Condition="'$(Bear2WaveVersion)'=='' and Exists('$(MSBuildProjectDirectory)\..\VERSION.txt')">$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\..\VERSION.txt').Trim())</Bear2WaveVersion>
+    <Bear2WaveVersion Condition="'$(Bear2WaveVersion)'==''">0.2.0-beta</Bear2WaveVersion>
+  </PropertyGroup>
+  <!-- Imported last: override stale VcpkgRoot from Bear2WaveTraceFormats.props when zlib.h is missing -->
+  <PropertyGroup Condition="'$(Platform)'=='x64' and ('$(VcpkgRoot)'=='' or !Exists('$(VcpkgRoot)\include\zlib.h'))">
+    <_VcpkgCandidate Condition="'$(VCPKG_ROOT)'!='' and Exists('$(VCPKG_ROOT)\installed\x64-windows\include\zlib.h')">$(VCPKG_ROOT)\installed\x64-windows</_VcpkgCandidate>
+    <_VcpkgCandidate Condition="'$(_VcpkgCandidate)'=='' and Exists('$(MSBuildProjectDirectory)\..\vcpkg_installed\x64-windows\include\zlib.h')">$(MSBuildProjectDirectory)\..\vcpkg_installed\x64-windows</_VcpkgCandidate>
+    <_VcpkgCandidate Condition="'$(_VcpkgCandidate)'=='' and Exists('E:\download\vcpkg-master\installed\x64-windows\include\zlib.h')">E:\download\vcpkg-master\installed\x64-windows</_VcpkgCandidate>
+    <_VcpkgCandidate Condition="'$(_VcpkgCandidate)'=='' and Exists('E:\vcpkg-master\installed\x64-windows\include\zlib.h')">E:\vcpkg-master\installed\x64-windows</_VcpkgCandidate>
+    <_VcpkgCandidate Condition="'$(_VcpkgCandidate)'=='' and Exists('C:\vcpkg\installed\x64-windows\include\zlib.h')">C:\vcpkg\installed\x64-windows</_VcpkgCandidate>
+    <VcpkgRoot Condition="'$(_VcpkgCandidate)'!=''">$(_VcpkgCandidate)</VcpkgRoot>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <Bear2WaveIncludeDirs>$(ProjectDir);$(ProjectDir)core;$(WxWidgetsRoot)\include\msvc;$(WxWidgetsRoot)\include;$(VcpkgRoot)\include;$(ProjectDir)..\third_party\libfst\src;$(GtkwaveLibRoot);$(GtkwaveLibRoot)\libvzt;$(GtkwaveLibRoot)\libvzt\lzma;$(GtkwaveLibRoot)\liblxt;$(GtkwaveLibRoot)\libghw</Bear2WaveIncludeDirs>
+    <Bear2WaveLibDirs>$(WxWidgetsRoot)\lib\vc_x64_lib;$(VcpkgRoot)\lib</Bear2WaveLibDirs>
+    <GtkwaveInc>$(GtkwaveLibRoot);$(GtkwaveLibRoot)\libvzt;$(GtkwaveLibRoot)\libvzt\lzma;$(GtkwaveLibRoot)\liblxt;$(GtkwaveLibRoot)\libghw</GtkwaveInc>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(Bear2WaveIncludeDirs);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BEAR2WAVE_VERSION="$(Bear2WaveVersion)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/utf-8 /FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(Bear2WaveLibDirs);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>wxbase32ud.lib;wxbase32ud_net.lib;wxbase32ud_xml.lib;wxexpatd.lib;wxjpegd.lib;wxmsw32ud_adv.lib;wxmsw32ud_aui.lib;wxmsw32ud_core.lib;wxmsw32ud_gl.lib;wxmsw32ud_html.lib;wxmsw32ud_media.lib;wxmsw32ud_propgrid.lib;wxmsw32ud_qa.lib;wxmsw32ud_ribbon.lib;wxmsw32ud_richtext.lib;wxmsw32ud_stc.lib;wxmsw32ud_webview.lib;wxmsw32ud_xrc.lib;wxpngd.lib;wxregexud.lib;wxscintillad.lib;wxtiffd.lib;wxzlibd.lib;zlib.lib;bz2.lib;libcurl.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(VcpkgRoot)\bin\bz2.dll" copy /Y "$(VcpkgRoot)\bin\bz2.dll" "$(OutDir)"
+if exist "$(VcpkgRoot)\bin\zlib1.dll" copy /Y "$(VcpkgRoot)\bin\zlib1.dll" "$(OutDir)"
+if exist "$(VcpkgRoot)\bin\zlibd1.dll" copy /Y "$(VcpkgRoot)\bin\zlibd1.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <!-- Release links wx "u" libs when lib/vc_x64_lib/mswu exists; else falls back to debug "ud" (common dev install). -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <WxLibSuffix Condition="Exists('$(WxWidgetsRoot)\lib\vc_x64_lib\mswu\wx\setup.h')">u</WxLibSuffix>
+    <WxLibSuffix Condition="'$(WxLibSuffix)'==''">ud</WxLibSuffix>
+    <WxSetupInc>$(WxWidgetsRoot)\lib\vc_x64_lib\msw$(WxLibSuffix)\wx</WxSetupInc>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(Bear2WaveIncludeDirs);$(WxSetupInc);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BEAR2WAVE_VERSION="$(Bear2WaveVersion)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/utf-8 /FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' and '$(WxLibSuffix)'=='ud'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' and '$(WxLibSuffix)'=='u'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' and '$(WxLibSuffix)'=='ud'">
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalLibraryDirectories>$(Bear2WaveLibDirs);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>wxbase32ud.lib;wxbase32ud_net.lib;wxbase32ud_xml.lib;wxexpatd.lib;wxjpegd.lib;wxmsw32ud_adv.lib;wxmsw32ud_aui.lib;wxmsw32ud_core.lib;wxmsw32ud_gl.lib;wxmsw32ud_html.lib;wxmsw32ud_media.lib;wxmsw32ud_propgrid.lib;wxmsw32ud_qa.lib;wxmsw32ud_ribbon.lib;wxmsw32ud_richtext.lib;wxmsw32ud_stc.lib;wxmsw32ud_webview.lib;wxmsw32ud_xrc.lib;wxpngd.lib;wxregexud.lib;wxscintillad.lib;wxtiffd.lib;wxzlibd.lib;zlib.lib;bz2.lib;libcurl.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' and '$(WxLibSuffix)'=='u'">
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalLibraryDirectories>$(Bear2WaveLibDirs);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>wxbase32u.lib;wxbase32u_net.lib;wxbase32u_xml.lib;wxexpat.lib;wxjpeg.lib;wxmsw32u_adv.lib;wxmsw32u_aui.lib;wxmsw32u_core.lib;wxmsw32u_gl.lib;wxmsw32u_html.lib;wxmsw32u_media.lib;wxmsw32u_propgrid.lib;wxmsw32u_qa.lib;wxmsw32u_ribbon.lib;wxmsw32u_richtext.lib;wxmsw32u_stc.lib;wxmsw32u_webview.lib;wxmsw32u_xrc.lib;wxpng.lib;wxregexu.lib;wxscintilla.lib;wxtiff.lib;wxzlib.lib;zlib.lib;bz2.lib;libcurl.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PostBuildEvent>
+      <Command>if exist "$(VcpkgRoot)\bin\bz2.dll" copy /Y "$(VcpkgRoot)\bin\bz2.dll" "$(OutDir)"
+if exist "$(VcpkgRoot)\bin\zlib1.dll" copy /Y "$(VcpkgRoot)\bin\zlib1.dll" "$(OutDir)"
+if exist "$(VcpkgRoot)\bin\zlibd1.dll" copy /Y "$(VcpkgRoot)\bin\zlibd1.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Target Name="Bear2WaveCheckVcpkg" BeforeTargets="ClCompile" Condition="'$(Platform)'=='x64'">
+    <Error Condition="'$(VcpkgRoot)'=='' or !Exists('$(VcpkgRoot)\include\zlib.h')"
+           Text="Cannot find zlib.h (VcpkgRoot='$(VcpkgRoot)'). Run: vcpkg install zlib:x64-windows bzip2:x64-windows liblzma:x64-windows. Then set env VCPKG_ROOT or edit TEST1\Bear2WaveTraceFormats.props." />
+  </Target>
+</Project>

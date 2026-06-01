@@ -1,0 +1,68 @@
+# Optional Release build (W4-3). Skips when wx mswu is not available on the runner.
+name: Windows CI Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - 'TEST1/**'
+      - 'VERSION.txt'
+      - 'tools/package_release.ps1'
+      - '.github/workflows/windows-ci-release.yml'
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 2024.12.16.0
+          vcpkgJsonGlob: vcpkg.json
+
+      - name: Prepare TraceFormats.props
+        shell: pwsh
+        run: |
+          $props = "TEST1/Bear2WaveTraceFormats.props"
+          if (-not (Test-Path $props)) {
+            Copy-Item "TEST1/Bear2WaveTraceFormats.props.example" $props
+          }
+          $vcpkg = "$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows"
+          if (-not (Test-Path $vcpkg)) { $vcpkg = "$env:VCPKG_ROOT/installed/x64-windows" }
+          $xml = Get-Content $props -Raw
+          $xml = $xml -replace '<VcpkgRoot>[^<]*</VcpkgRoot>', "<VcpkgRoot>$vcpkg</VcpkgRoot>"
+          Set-Content -Path $props -Value $xml -NoNewline
+
+      - name: Check wx mswu (Release libs)
+        id: wx
+        shell: pwsh
+        run: |
+          $wx = $env:WXWIN
+          if (-not $wx) {
+            Write-Host "::notice::WXWIN not set — skipping Release GUI build (TraceTools Debug still runs in windows-ci.yml)"
+            echo "has_mswu=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          $ok = Test-Path "$wx/lib/vc_x64_lib/mswu/wx/setup.h"
+          if ($ok) { Write-Host "wx mswu found" } else { Write-Host "::notice::wx mswu missing — skip Release Bear2Wave build" }
+          echo "has_mswu=$ok" >> $env:GITHUB_OUTPUT
+
+      - name: Build Bear2Wave Release x64
+        if: steps.wx.outputs.has_mswu == 'true'
+        shell: pwsh
+        run: |
+          $ver = (Get-Content VERSION.txt -Raw).Trim()
+          $msb = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest -requires Microsoft.Component.MSBuild `
+            -find "MSBuild\**\Bin\MSBuild.exe" | Select-Object -First 1
+          & $msb TEST1/TEST1.vcxproj /p:Configuration=Release /p:Platform=x64 /p:Bear2WaveVersion=$ver /v:minimal
+
+      - name: CLI smoke (Release TraceTools if built)
+        if: steps.wx.outputs.has_mswu == 'true'
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          powershell -ExecutionPolicy Bypass -File tools/run_smoke.ps1 -Configuration Release -TraceToolsOnly -SkipBuild

@@ -1,0 +1,23 @@
+<html><body bgcolor="#eef2f7" text="#1e293b" link="#2563eb" vlink="#2563eb">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td bgcolor="#1e3a5f">
+<font color="#ffffff" face="Segoe UI, Microsoft YaHei UI, sans-serif" size="5"><b>故障排除</b></font>
+</td></tr>
+<tr><td>
+<font face="Segoe UI, Microsoft YaHei UI, sans-serif" size="3">
+<table width="100%" cellpadding="6" cellspacing="0" border="1" bordercolor="#cbd5e1">
+<tr bgcolor="#e8eef5"><th><b>现象</b></th><th><b>建议</b></th></tr>
+<tr><td>VCD 很慢 / 内存高</td><td>转 FST；设 BEAR2WAVE_VCD_LAZY=1</td></tr>
+<tr bgcolor="#f8fafc"><td>波形空白</td><td>确认信号已加入波形区；等待 lazy 加载</td></tr>
+<tr><td>平移后加载久</td><td>正常；Esc 取消；优先 FST</td></tr>
+<tr bgcolor="#f8fafc"><td>会话信号找不到</td><td>检查 .bwv 中 trace 路径与信号名</td></tr>
+<tr><td>AI 无响应</td><td>检查 API Key / 网络；先用本地报告</td></tr>
+<tr bgcolor="#f8fafc"><td>Help 显示异常</td><td>确认 docs/help/ 与 exe 相对路径正确</td></tr>
+</table>
+<br/>
+<p>View → Debug log window（Ctrl+Shift+L）查看详细日志。</p>
+<p>View → Dump waveform / trace summary 导出诊断摘要。</p>
+</font>
+</td></tr>
+</table>
+</body></html>

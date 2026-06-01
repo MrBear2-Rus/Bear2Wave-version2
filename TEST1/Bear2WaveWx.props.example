@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy to Bear2WaveWx.props (gitignored). Required for GUI build (TEST1.vcxproj x64).
+  Set WXWIN environment variable OR edit WxWidgetsRoot below.
+  wxWidgets 3.2+ MSVC x64: lib/vc_x64_lib/mswud (Debug) and optionally mswu (Release).
+  Build Release wx: nmake ... BUILD=release SHARED=0 TARGET_CPU=X64
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <WxWidgetsRoot Condition="'$(WxWidgetsRoot)'=='' and '$(WXWIN)'!=''">$(WXWIN)</WxWidgetsRoot>
+    <WxWidgetsRoot Condition="'$(WxWidgetsRoot)'==''">C:\wxWidgets-3.2.9</WxWidgetsRoot>
+  </PropertyGroup>
+</Project>

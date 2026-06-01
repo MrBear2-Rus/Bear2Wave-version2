@@ -1,0 +1,22 @@
+<html><body bgcolor="#eef2f7" text="#1e293b" link="#2563eb" vlink="#2563eb">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td bgcolor="#1e3a5f">
+<font color="#ffffff" face="Segoe UI, Microsoft YaHei UI, sans-serif" size="5"><b>支持的文件格式</b></font>
+</td></tr>
+<tr><td>
+<font face="Segoe UI, Microsoft YaHei UI, sans-serif" size="3">
+<table width="100%" cellpadding="6" cellspacing="0" border="1" bordercolor="#cbd5e1">
+<tr bgcolor="#e8eef5"><th><b>扩展名</b></th><th><b>说明</b></th><th><b>大文件</b></th></tr>
+<tr bgcolor="#f8fafc"><td><font face="Consolas">.vcd/.evcd</font></td><td>文本 VCD / 扩展 VCD</td><td>小文件；大文件 lazy 或 vcd2fst</td></tr>
+<tr><td><font face="Consolas">.fst/.fzt</font></td><td>FST（.fzt 为拼写容错）</td><td bgcolor="#dcfce7"><b>首选</b></td></tr>
+<tr bgcolor="#f8fafc"><td><font face="Consolas">.vzt</font></td><td>GTKWave 压缩</td><td>需 WITH_VZT</td></tr>
+<tr bgcolor="#f8fafc"><td><font face="Consolas">.lxt/.lxt2</font></td><td>LXT 系列</td><td>需 WITH_LXT2</td></tr>
+<tr><td><font face="Consolas">.ghw</font></td><td>GHDL 波形</td><td>需 WITH_GHW</td></tr>
+<tr bgcolor="#f8fafc"><td><font face="Consolas">.csv</font></td><td>表格波形（首列时间）</td><td>trace_loader 统一加载</td></tr>
+</table>
+<br/>
+<p>仿真建议：<font face="Consolas" bgcolor="#e2e8f0">$dumpfile("waves.fst");</font> 或 <font face="Consolas">vcd2fst huge.vcd huge.fst</font></p>
+</font>
+</td></tr>
+</table>
+</body></html>

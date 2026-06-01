@@ -1,0 +1,37 @@
+<html><body bgcolor="#eef2f7" text="#1e293b" link="#2563eb" vlink="#2563eb">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td bgcolor="#1e3a5f">
+<font color="#ffffff" face="Segoe UI, Microsoft YaHei UI, sans-serif" size="5"><b>AI 与本地分析</b></font>
+</td></tr>
+<tr><td>
+<font face="Segoe UI, Microsoft YaHei UI, sans-serif" size="3">
+
+<h2><font color="#1565c0"><b>本地分析（无需网络）</b></font></h2>
+<p><font face="Consolas" bgcolor="#e2e8f0">Ctrl+Shift+A</font> 打开 AI 面板 → Notebook：</p>
+<ul>
+<li><b>本地统计</b> — 边沿、占空比、周期、X/Z、毛刺</li>
+<li><b>区间</b> — Marker A–B、Setup 粗查、Compare</li>
+<li><b>总线</b> — hex 时间线、最常见值、ASCII 预览</li>
+<li><b>规则</b> — valid/ready、双信号对比、竞赛清单</li>
+</ul>
+<p>点击 <b>刷新统计 / 完整报告</b>，可导出或「送 AI 解释」。</p>
+<br/>
+
+<h2><font color="#1565c0"><b>AI 分析（DeepSeek / Ollama）</b></font></h2>
+<ol>
+<li>AI → Set API Key（存于 %APPDATA%\Bear2Wave\config.ini）</li>
+<li>波形区添加信号 → <b>从波形刷新</b></li>
+<li>选模板 → <b>AI 分析</b>（后台，可取消）</li>
+</ol>
+<table width="100%" cellpadding="6" cellspacing="0" border="1" bordercolor="#cbd5e1">
+<tr bgcolor="#e8eef5"><th><b>功能</b></th><th><b>说明</b></th></tr>
+<tr><td>右键 AI Analyze</td><td>单路信号分析</td></tr>
+<tr bgcolor="#f8fafc"><td>多轮对话</td><td>保留最近 K 轮</td></tr>
+<tr><td>跳转时间</td><td>从回复解析时间戳</td></tr>
+<tr bgcolor="#f8fafc"><td>Ollama 本地</td><td>设置中启用 127.0.0.1:11434</td></tr>
+</table>
+
+</font>
+</td></tr>
+</table>
+</body></html>

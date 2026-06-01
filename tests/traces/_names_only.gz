@@ -1,0 +1,18 @@
+[*]
+[*] GTKWave save file (written by Bear2Wave)
+[*]
+[dumpfile]
+test2.vcd
+[dumpfile_mtime] 1777468077
+[savefile] _names_only.gz
+[size]
+1400 800
+[pos]
+153 109
+[sst_width] 280
+[signals_width] 300
+[state]
+0 200
++TOP.TOP.TOP.uart.rx_data[7:0]
++TOP.TOP.TOP.uart.rx_en
++TOP.TOP.TOP.uart.tx_data[7:0]
